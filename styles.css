@@ -32,8 +32,10 @@ body {
 .ring {
   position: absolute;
   left: 0;
-  stroke: #09A65A;
   top: 0;
+  right: 0;
+  bottom: 0;
+  stroke: #09A65A;
   z-index: 1;
 }
 
@@ -115,4 +117,10 @@ input[type=text]:disabled {
 
 .hidden {
   visibility: hidden;
+}
+
+svg circle {
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: 1s linear all;
 }
