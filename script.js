@@ -11,17 +11,44 @@ const secondsContainer = document.querySelector('.seconds');
 // Default initial values
 let minutes = Number(minutesContainer.firstElementChild.value);
 let seconds = Number(secondsContainer.firstElementChild.value);
-let TIME_LIMIT = minutes * 60 + seconds;
 
 // Time constants
 let timeLeft, timerId, timePassed = 0;
+let { TIME_LIMIT, WARNING_THRESHOLD, ALERT_THRESHOLD } = createTimerConstants(minutes, seconds);
 
 // Styles related constants
 const FULL_DASH_ARRAY = 1700;
+const TIME_COLORS = {
+  warning: {
+    name: 'middle',
+    threshold: WARNING_THRESHOLD
+  },
+  alert: {
+    color: 'ending',
+    threshold: ALERT_THRESHOLD
+  }
+}
+
+// Function to create timer constants
+function createTimerConstants(minutes, seconds) {
+  const TIME_LIMIT = minutes * 60 + seconds;
+  const WARNING_THRESHOLD = TIME_LIMIT / 2;
+  const ALERT_THRESHOLD = WARNING_THRESHOLD / 2;
+
+  return {
+    TIME_LIMIT,
+    WARNING_THRESHOLD,
+    ALERT_THRESHOLD
+  }
+}
 
 // Set the initial time limit based on the user's input
 function setInitialTime() {
-  TIME_LIMIT = minutes * 60 + seconds;
+  const {warning, alert} = TIME_COLORS;
+  ({TIME_LIMIT, WARNING_THRESHOLD, ALERT_THRESHOLD} = createTimerConstants(minutes, seconds));
+
+  warning.threshold = WARNING_THRESHOLD;
+  alert.threshold = ALERT_THRESHOLD;
   timeLeft = TIME_LIMIT;
 }
 
@@ -38,12 +65,11 @@ function toggle(button) {
         // Update the time passed and time left
         timePassed++;
         timeLeft = TIME_LIMIT - timePassed;
-        console.log({timePassed, timeLeft, TIME_LIMIT});
-
         // Update the timer's properties
         updateTime();
         updateDisplay();
         setCircleDasharray();
+        setRemainingPathColor(timeLeft);
       }, 1000);
       break;
     case 'stop':
@@ -78,8 +104,6 @@ function updateTime() {
     playSound();
     // Stop the timer
     clearInterval(timerId);
-    // Update the timer style
-    updateStyle('.ring', 'ending');
     // Display an alert message
     triggerAlert('Time is up!');
     // Change the button label
@@ -96,9 +120,9 @@ function updateTime() {
 }
 
 // Function to update the style of an element
-function updateStyle(element, className) {
+function updateStyle(element, firstClass, secondClass) {
   const ring = document.querySelector(element);
-  ring.classList.toggle(className);
+  ring.classList.replace(firstClass, secondClass);
 }
 
 // Function to display an alert message with a delay
@@ -123,7 +147,7 @@ function setupTimer() {
   // Perform updates upon timer's end
   if (minutes !== 0 || seconds !== 0) {
     startButton.innerHTML = 'start';
-    updateStyle('.ring', 'ending');
+    updateStyle('.ring', 'ending', 'initial');
   } else {
     startButton.innerHTML = 'new time';
   }
@@ -156,6 +180,19 @@ function calculateTimeFraction() {
 function setCircleDasharray() {
   const setCircleDashArray = `${calculateTimeFraction() * FULL_DASH_ARRAY} ${FULL_DASH_ARRAY}`;
   circle.setAttribute("stroke-dasharray", setCircleDashArray);
+}
+
+// Function to set the remaining path color
+function setRemainingPathColor(timeLeft) {
+  const { warning, alert } = TIME_COLORS;
+
+  if (timeLeft <= warning.threshold) {
+    updateStyle('.ring', 'initial', 'middle');
+  }
+
+  if (timeLeft <= alert.threshold) {
+    updateStyle('.ring', 'middle', 'ending');
+  }
 }
 
 // Event listeners to control timer actions

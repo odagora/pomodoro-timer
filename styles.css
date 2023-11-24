@@ -35,8 +35,16 @@ body {
   top: 0;
   right: 0;
   bottom: 0;
-  stroke: #09A65A;
   z-index: 1;
+  transform: scaleX(-1);
+}
+
+.ring.initial circle {
+  stroke: #09A65A;
+}
+
+.ring.middle circle {
+  stroke: #ffa600ef;
 }
 
 .ring.ending circle {
