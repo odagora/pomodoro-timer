@@ -2,8 +2,8 @@
 
 @font-face {
   font-family: "bebas";
-  src: url('./fonts/bebasneue-book-webfont.woff') format('woff'),
-      url('./fonts/bebasneue-book-webfont.woff2') format('woff2');
+  src: url('../fonts/bebasneue-book-webfont.woff') format('woff'),
+      url('../fonts/bebasneue-book-webfont.woff2') format('woff2');
 }
 
 body {
