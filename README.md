@@ -2,8 +2,6 @@
 
 In this project, we're creating a Pomodoro timer.
 
-You can use as many (or as few) tools, libraries, and frameworks as you'd like. If you're trying to learn something new, this might be a great way to push yourself.
-
 **Users should be able to:**
 
 - Start the timer by clicking on the start link/button.
@@ -11,27 +9,82 @@ You can use as many (or as few) tools, libraries, and frameworks as you'd like. 
 - Click on the gear icon to change the length (minutes and seconds) of the timer.
 - Once the timer finishes, the ring should change from green to red and an alert message is passed to the browser.
 
-# Getting Started
+# Screenshots
 
-1. To get started, download the zip file. This includes all the project assets you need to get started: HTML, CSS, images, and fonts.
-2. Take a look around. Look at the project's Figma file. This is a great way to see how the pieces and parts should look within the browser.
-3. Open the project's `README.md` file. It has additional information on how the project is structured.
-4. Customize your project / file architecture to your liking.
-5. Happy coding!
-6. Once you're finished, share your work using **#adventofjs**
+## Initial state
+![Initial state](https://bit.ly/4afXSfS)
 
-# Taking your Project to the Next Level
+## Edit time state
+![Edit time state](https://bit.ly/3Tiua3O)
 
-- Use a framework like [React](https://reactjs.org/), [Vue](https://vuejs.org/), or [Svelte](https://svelte.dev/). Or, if you're feeling particularly adventurous, try writing everything in Vanilla JavaScript.
-- Take a step back and try writing the HTML and CSS for this project yourself. Start with the provided Figma file. If you get stuck, you can always purchase the Advent of CSS solutions, where Amy explains how to build this.
-- When the timer is completed, play the alert sound. (Audio file included)
+## Warning state
+![Warning state](https://bit.ly/3tcMCQG)
 
-# FAQs
+## Alert state
+![Alert state](https://bit.ly/3RCCfip)
 
-- Can I use libraries / frameworks on these projects?
-    - Of course! We're providing the vanilla HTML and CSS, but you can use whatever tools and frameworks you'd like.
-- Oh no! I'm stuck!
-    - Consider [purchasing the Solutions](http://adventofjs.com) (if you haven't already). You'll get access to a video, where James explains how to write all the code.
-    - Check out the [Learn Build Teach Discord.](http://learnbuidteach.com) We have a specific channel set up, just for the Advent of JavaScript.
-- Can I use this project in my portfolio?
-    - Sure! But, be honest about the work that *you* did
+## Final state
+![Final state](https://bit.ly/3GDZC53)
+
+## My process
+
+### Built with
+
+- Vanilla JavaScript
+- CSS transformations
+- SVG manipulation
+
+### What I learned
+
+1. Use of `setInterval` and `clearInterval`:
+    ```js
+    toggle() {
+      switch (this.startSelector.innerHTML) {
+        case 'start':
+          // Disable the settings button
+          this.settingSelector.setAttribute('disabled', '');
+          // Change the button label to 'stop'
+          this.startSelector.innerHTML = 'stop';
+          // Start the timer and execute updateTime() and updateDisplay() every second
+          this.timerId = setInterval(() => {
+            // Update the time passed and time left
+            this.timePassed++;
+            this.timeLeft = this.TIME_LIMIT - this.timePassed;
+            // Update the timer's properties
+            this.updateTime();
+            this.updateDisplay();
+            this.setCircleDasharray();
+            this.setRemainingPathColor(this.timeLeft);
+          }, 1000);
+          break;
+        case 'stop':
+          // Change the button label to 'start'
+          this.startSelector.innerHTML = 'start';
+          // Stop the timer
+          clearInterval(this.timerId);
+          break;
+      }
+    }
+2. Use of `replace` for toggling between css classes with JavaScript:
+    ```js
+    export function updateStyle(element, firstClass, secondClass) {
+      const target = document.querySelector(element);
+      target.classList.replace(firstClass, secondClass);
+    }
+
+3. Use of `debounce` for delaying events:
+    ```js
+    function debounce(callBack, delay = 100) {
+      let timeout;
+
+      return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          callBack(...args)
+        }, delay)
+      }
+    }
+
+## Author
+
+- Website - [Daniel González](https://odagora.com)
