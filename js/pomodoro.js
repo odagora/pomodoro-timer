@@ -32,7 +32,6 @@ export class PomodoroTimer {
     this.createTimerConstants();
 
     // Additional constants related to SVG circle animation
-    this.FULL_DASH_ARRAY = 1700;
     this.TIME_COLORS = {
       warning: {
         name: 'middle',
@@ -43,7 +42,9 @@ export class PomodoroTimer {
         threshold: this.ALERT_THRESHOLD
       }
     }
+  }
 
+  setupEventListeners() {
     // Event listeners for start, setting, and input elements
     this.startSelector.addEventListener('click', () => {
       this.toggle(this.startSelector);
@@ -74,10 +75,15 @@ export class PomodoroTimer {
   setInitialTime() {
     const { warning, alert } = this.TIME_COLORS;
     this.createTimerConstants();
+    this.setInitialAnimationTime();
 
     warning.threshold = this.WARNING_THRESHOLD;
     alert.threshold = this.ALERT_THRESHOLD;
     this.timeLeft = this.TIME_LIMIT;
+  }
+
+  setInitialAnimationTime() {
+    document.body.style.setProperty('--total-time', `${this.TIME_LIMIT}s`);
   }
 
   // Method to toggle between start and stop states
@@ -88,6 +94,8 @@ export class PomodoroTimer {
         this.settingSelector.setAttribute('disabled', '');
         // Change the button label to 'stop'
         this.startSelector.innerHTML = 'stop';
+        // Start the ring animation
+        document.body.style.setProperty('--pomodoro-state', 'running');
         // Start the timer and execute updateTime() and updateDisplay() every second
         this.timerId = setInterval(() => {
           // Update the time passed and time left
@@ -96,7 +104,6 @@ export class PomodoroTimer {
           // Update the timer's properties
           this.updateTime();
           this.updateDisplay();
-          this.setCircleDasharray();
           this.setRemainingPathColor(this.timeLeft);
         }, 1000);
         break;
@@ -105,6 +112,8 @@ export class PomodoroTimer {
         this.startSelector.innerHTML = 'start';
         // Stop the timer
         clearInterval(this.timerId);
+        // Pause the ring animation
+        document.body.style.setProperty('--pomodoro-state', 'paused');
         break;
     }
   }
@@ -171,20 +180,6 @@ export class PomodoroTimer {
     } else {
       this.settingSelector.firstElementChild.src = './images/gear.svg';
     }
-  }
-
-  // Method to calculate the fraction of time remaining for the SVG circle animation
-  calculateTimeFraction() {
-    const rawTimeFraction = this.timeLeft / this.TIME_LIMIT;
-
-    return rawTimeFraction - (1 / this.TIME_LIMIT) * (1 - rawTimeFraction);
-  }
-
-  // Method to set the dasharray attribute of the SVG circle
-  setCircleDasharray() {
-    const circleDasharray = `${this.calculateTimeFraction() * this.FULL_DASH_ARRAY} ${this.FULL_DASH_ARRAY}`;
-
-    this.circleSelector.setAttribute('stroke-dasharray', circleDasharray);
   }
 
   // Method to set the color of the remaining path based on time thresholds

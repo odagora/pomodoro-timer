@@ -6,6 +6,11 @@
       url('../fonts/bebasneue-book-webfont.woff2') format('woff2');
 }
 
+:root {
+  --total-time: 1500s;
+  --pomodoro-state: paused;
+}
+
 body {
   align-items: center;
   background: #2B2A30;
@@ -128,7 +133,17 @@ input[type=text]:disabled {
 }
 
 svg circle {
+  stroke-dasharray: 100 100;
+  animation: progress linear forwards;
+  animation-duration: var(--total-time);
+  animation-play-state: var(--pomodoro-state);
   transform: rotate(-90deg);
   transform-origin: center;
   transition: 1s linear all;
+}
+
+@keyframes progress {
+  to {
+    stroke-dasharray: 0 100;
+  }
 }

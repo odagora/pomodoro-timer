@@ -11,4 +11,4 @@ const newPomodoro = new PomodoroTimer({
   audioURL: url,
 })
 
-console.log(newPomodoro);
+newPomodoro.setupEventListeners();
