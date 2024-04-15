@@ -24,134 +24,116 @@ export class PomodoroTimer {
     this.minutes = Number(minutesSelector.firstElementChild.value);
     this.seconds = Number(secondsSelector.firstElementChild.value);
 
-    this.timeLeft = 0;
     this.timerId = 0;
-    this.timePassed = 0;
+    this.timeRemaining = this.minutes * 60 + this.seconds;
 
-    // Creating timer constants based on initial time values
-    this.createTimerConstants();
 
     // Additional constants related to SVG circle animation
-    this.TIME_COLORS = {
+    this.timeColorThresholds = {
       warning: {
         name: 'middle',
-        threshold: this.WARNING_THRESHOLD
+        threshold: 0
       },
       alert: {
         color: 'ending',
-        threshold: this.ALERT_THRESHOLD
+        threshold: 0
       }
     }
+
+    // Creating timer constants based on initial time values
+    this.setupTimerConstants();
   }
 
   setupEventListeners() {
     // Event listeners for start, setting, and input elements
     this.startSelector.addEventListener('click', () => {
-      this.toggle(this.startSelector);
+      if (this.timeRemaining) {
+        this.toggleTimer();
+        return;
+      }
+      location.reload();
     });
     this.settingSelector.addEventListener('click', () => {
-      this.setupTimer();
+      this.setupTimerSettings();
     });
     this.minutesSelector.firstElementChild.addEventListener('keyup', (event) => {
       this.minutes = Number(event.target.value);
-      debouncedUpdateDisplay(this.updateDisplay());
-      this.setInitialTime();
+      debouncedUpdateDisplay(this.updateTimerDisplay());
+      this.setupTimerConstants();
     });
     this.secondsSelector.firstElementChild.addEventListener('keyup', (event) => {
       this.seconds = Number(event.target.value);
-      debouncedUpdateDisplay(this.updateDisplay());
-      this.setInitialTime();
+      debouncedUpdateDisplay(this.updateTimerDisplay());
+      this.setupTimerConstants();
     })
   }
 
   // Method to create timer constants based on current time values
-  createTimerConstants() {
-    this.TIME_LIMIT = this.minutes * 60 + this.seconds;
-    this.WARNING_THRESHOLD = this.TIME_LIMIT / 2;
-    this.ALERT_THRESHOLD = this.WARNING_THRESHOLD / 2;
+  setupTimerConstants() {
+    const totalSeconds = this.minutes * 60 + this.seconds;
+    const { warning, alert } = this.timeColorThresholds;
+
+    this.timeRemaining = totalSeconds;
+    warning.threshold = totalSeconds / 2;
+    alert.threshold = totalSeconds / 4;
+    this.setInitialAnimationTime(this.timeRemaining);
   }
 
   // Method to set initial time properties
-  setInitialTime() {
-    const { warning, alert } = this.TIME_COLORS;
-    this.createTimerConstants();
-    this.setInitialAnimationTime();
-
-    warning.threshold = this.WARNING_THRESHOLD;
-    alert.threshold = this.ALERT_THRESHOLD;
-    this.timeLeft = this.TIME_LIMIT;
-  }
-
-  setInitialAnimationTime() {
-    document.body.style.setProperty('--total-time', `${this.TIME_LIMIT}s`);
+  setInitialAnimationTime(totalSeconds) {
+    const totalTimeInSeconds = `${totalSeconds}s`;
+    document.body.style.setProperty('--total-time', totalTimeInSeconds);
   }
 
   // Method to toggle between start and stop states
-  toggle() {
-    switch (this.startSelector.innerHTML) {
-      case 'start':
-        // Disable the settings button
-        this.settingSelector.setAttribute('disabled', '');
-        // Change the button label to 'stop'
-        this.startSelector.innerHTML = 'stop';
-        // Start the ring animation
-        document.body.style.setProperty('--pomodoro-state', 'running');
-        // Start the timer and execute updateTime() and updateDisplay() every second
-        this.timerId = setInterval(() => {
-          // Update the time passed and time left
-          this.timePassed++;
-          this.timeLeft = this.TIME_LIMIT - this.timePassed;
-          // Update the timer's properties
-          this.updateTime();
-          this.updateDisplay();
-          this.setRemainingPathColor(this.timeLeft);
-        }, 1000);
-        break;
-      case 'stop':
-        // Change the button label to 'start'
-        this.startSelector.innerHTML = 'start';
-        // Stop the timer
-        clearInterval(this.timerId);
-        // Pause the ring animation
-        document.body.style.setProperty('--pomodoro-state', 'paused');
-        break;
+  toggleTimer() {
+    const { startSelector, settingSelector } = this;
+    const isStarting = startSelector.innerHTML === 'start';
+
+    if (isStarting) {
+      settingSelector.setAttribute('disabled', '');
+      startSelector.innerHTML = 'stop';
+      document.body.style.setProperty('--pomodoro-state', 'running');
+      this.timerId = setInterval(() => {
+        this.timeRemaining--;
+        this.updateTimeRemaining();
+        this.updateTimerDisplay();
+        this.setRemainingPathColor();
+      }, 1000);
+    } else {
+      startSelector.innerHTML = 'start';
+      clearInterval(this.timerId);
+      document.body.style.setProperty('--pomodoro-state', 'paused');
     }
   }
 
   // Method to update the display of minutes and seconds
-  updateDisplay() {
+  updateTimerDisplay() {
     this.minutesSelector.firstElementChild.value = formatTime(this.minutes);
     this.secondsSelector.firstElementChild.value = formatTime(this.seconds);
   }
 
   // Method to update time during the timer countdown
-  updateTime() {
-    if (this.minutes === 0 && this.seconds === 0) {
-      // Disable the settings button
-      this.settingSelector.removeAttribute('disabled');
-      // Reset the time passed
-      this.timePassed = 0;
-      // Play an alert sound when the timer reaches zero
-      playSound(this.audioURL);
-      // Stop the timer
-      clearInterval(this.timerId);
-      // Display an alert message
-      triggerAlert('Time is up!');
-      // Change the button label
-      this.startSelector.innerHTML = 'new time';
+  updateTimeRemaining() {
+    if (this.timeRemaining > 0) {
+      this.seconds = (this.timeRemaining) % 60;
+      this.minutes = Math.floor((this.timeRemaining) / 60);
     } else {
-      // Update the displayed minutes and seconds
-      if (this.seconds === 0) {
-        this.seconds = 59;
-        this.minutes--;
-      } else {
-        this.seconds--;
-      }
+      this.handleTimerEnd();
     }
   }
 
+  handleTimerEnd() {
+    this.seconds = 0;
+    playSound(this.audioURL);
+    clearInterval(this.timerId);
+    triggerAlert('Time is up!');
+    this.startSelector.innerHTML = 'new time';
+    this.settingSelector.removeAttribute('disabled');
+  }
+
   // Method to set up the timer settings
-  setupTimer() {
+  setupTimerSettings() {
     // Hide the button
     this.startSelector.classList.toggle('hidden');
     // Toggle disable/enable minutes and seconds input
@@ -160,15 +142,7 @@ export class PomodoroTimer {
     // Toggle the settings icon
     this.toggleSettingsIcon();
     // Update the timer's display
-    this.updateDisplay()
-
-    // Perform updates upon timer's end
-    if (this.minutes !== 0 || this.seconds !== 0) {
-      this.startSelector.innerHTML = 'start';
-      updateStyle('.ring', 'ending', 'initial');
-    } else {
-      this.startSelector.innerHTML = 'new time';
-    }
+    this.updateTimerDisplay();
   }
 
   // Method to toggle the settings icon between gear and check
@@ -183,14 +157,14 @@ export class PomodoroTimer {
   }
 
   // Method to set the color of the remaining path based on time thresholds
-  setRemainingPathColor(timeLeft) {
-    const { warning, alert } = this.TIME_COLORS;
+  setRemainingPathColor() {
+    const { warning, alert } = this.timeColorThresholds;
 
-    if (timeLeft <= warning.threshold) {
+    if (this.timeRemaining <= warning.threshold) {
       updateStyle('.ring', 'initial', 'middle');
     }
 
-    if (timeLeft <= alert.threshold) {
+    if (this.timeRemaining <= alert.threshold) {
       updateStyle('.ring', 'middle', 'ending');
     }
   }
